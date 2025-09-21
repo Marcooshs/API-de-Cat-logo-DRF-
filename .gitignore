@@ -1,33 +1,25 @@
+Set-Content .gitignore @"
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 *.egg-info/
-dist/
-build/
-
-# Ambiente/Segredos
 .venv/
-venv/
-ENV/
+*.log
+
+# Env (NUNCA commitar)
 .env
 .env.*
-db.sqlite3
 
-# Django (arquivos gerados)
-static/
+# Django
 staticfiles/
 media/
-local_settings.py
 
-# Testes/coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# IDE/SO
+# IDE/OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Docker
+*.pid
+"@

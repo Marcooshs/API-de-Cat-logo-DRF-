@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.http import JsonResponse
 
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -11,6 +12,10 @@ from drf_spectacular.views import (
 
 from catalog.views import CategoryViewSet, ProductViewSet
 from orders.views import OrderViewSet
+
+def healthz(_request):
+    return JsonResponse({"status": "ok"})
+
 
 # Catálogo — com barra final (ex.: /api/catalog/products/)
 router_catalog = DefaultRouter()  # trailing slash ON (default)
@@ -31,6 +36,7 @@ urlpatterns = [
 
     # Admin
     path('admin/', admin.site.urls),
+    path("healthz/", healthz),
 
     # Docs
     path('api/schema/', SpectacularAPIView.as_view(), name= 'schema'),

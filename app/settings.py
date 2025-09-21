@@ -1,12 +1,26 @@
 from pathlib import Path
 from datetime import timedelta
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # === Django básico ===
-SECRET_KEY = "change-me-in-prod"
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-unsafe")
+DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
+
+ALLOWED_HOSTS = os.getenv(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1,0.0.0.0"
+).split(",")
+
+# Confiar em origens para CSRF (útil quando acessa via porta/host diferentes ou proxy)
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "http://localhost,http://127.0.0.1,http://0.0.0.0"
+).split(",")
 
 # === Apps instalados ===
 INSTALLED_APPS = [
@@ -21,8 +35,8 @@ INSTALLED_APPS = [
     # 3rd party
     "rest_framework",
     "django_filters",
-    "drf_spectacular",          # OpenAPI/Swagger
-    "corsheaders",              # CORS (opcional; útil pra frontend separado)
+    "drf_spectacular",      # OpenAPI/Swagger
+    "corsheaders",          # CORS
 
     # Apps do projeto
     "catalog",
@@ -63,11 +77,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app.wsgi.application"
 
-# === Banco de dados (dev) ===
+# === Banco de dados (PostgreSQL por .env) ===
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "api_catalogos"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
+        "HOST": os.getenv("DB_HOST", "localhost"),  # em Docker use "db"
+        "PORT": os.getenv("DB_PORT", "5432"),
+        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),  # conexões persistentes
     }
 }
 
@@ -80,8 +99,12 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# === Static ===
+# === Static & Media ===
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # === Cache (memória local; em prod use Redis) ===
@@ -91,6 +114,13 @@ CACHES = {
         "LOCATION": "catalog-orders-cache",
     }
 }
+
+# === CORS ===
+# Em dev é prático liberar tudo; em prod prefira CORS_ALLOWED_ORIGINS
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "1" if DEBUG else "0") == "1"
+CORS_ALLOWED_ORIGINS = (
+    [] if CORS_ALLOW_ALL_ORIGINS else os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+)
 
 # === DRF ===
 REST_FRAMEWORK = {
@@ -140,13 +170,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
-
-# === CORS (libere em dev; em prod restrinja origens) ===
-CORS_ALLOW_ALL_ORIGINS = True
-# Em produção, prefira:
-# CORS_ALLOWED_ORIGINS = [
-#     "https://seu-frontend.com",
-# ]
 
 # === Logging (simples e útil em dev) ===
 LOGGING = {
