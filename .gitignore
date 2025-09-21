@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Ambiente/Segredos
+.venv/
+venv/
+ENV/
+.env
+.env.*
+db.sqlite3
+
+# Django (arquivos gerados)
+static/
+staticfiles/
+media/
+local_settings.py
+
+# Testes/coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE/SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
