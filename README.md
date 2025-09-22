@@ -1,6 +1,6 @@
 # API de Catálogos (Django + DRF)
 
-API para gestão de **catálogo de produtos** e **pedidos**, com **autenticação JWT**, **filtros/busca**, **paginação**, documentação **OpenAPI/Swagger** e suporte a **Docker**.  
+API para gestão de **catálogo de produtos** e **pedidos**, com **autenticação JWT**, **filtros/busca**, **paginação**, documentação **OpenAPI/Swagger** e suporte a **Docker**.
 
 ---
 
@@ -30,7 +30,7 @@ API para gestão de **catálogo de produtos** e **pedidos**, com **autenticaçã
 > Prefixos podem variar conforme seu `urls.py`. Abaixo um exemplo usual:
 
 - **Catálogo**
-  - `GET /api/catalog/products/` — lista produtos (com **filtros**, **busca**, **ordenação**)
+  - `GET /api/catalog/products/` — lista produtos (**filtros**, **busca**, **ordenação**)
     - Busca: `?search=texto`
     - Filtros (ex.): `?category=slug-da-categoria&is_active=true`
     - Ordenação: `?ordering=price` ou `?ordering=-price`
@@ -71,7 +71,7 @@ API para gestão de **catálogo de produtos** e **pedidos**, com **autenticaçã
 
 ### 1) Pré-requisitos
 - Python 3.12+
-- PostgreSQL 16+ (opcional para dev, mas recomendado)
+- PostgreSQL 16+ (opcional em dev, recomendado)
 - Git
 
 ### 2) Clonar e criar venv
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 ### 3) Criar .env
 
 Crie um arquivo .env na raiz do projeto:
-```.env
+```
 # Django
 DJANGO_SECRET_KEY=troque-esta-chave
 DJANGO_DEBUG=1
@@ -105,12 +105,13 @@ DB_PASSWORD="sua#senha#forte"
 DB_HOST=localhost
 DB_PORT=5432
 ```
+
 Dica: se a senha tiver #, ;, ! etc., mantenha em aspas.
 
 ---
 
 ### 4) Migrações e usuário admin
-```powershell
+```
 python manage.py migrate
 python manage.py createsuperuser
 ```
@@ -118,9 +119,10 @@ python manage.py createsuperuser
 ---
 
 ### 5) Rodar servidor
-```powershell
+```
 python manage.py runserver
 ```
+
 API: http://localhost:8000/
 
 Swagger: http://localhost:8000/api/schema/swagger/
@@ -133,8 +135,10 @@ Admin: http://localhost:8000/admin/
 
 ### 🐳 Como rodar com Docker
 
+---
+
 ### 1) .env para Docker
-```.env
+```
 DJANGO_SECRET_KEY=troque-esta-chave
 DJANGO_DEBUG=1
 ALLOWED_HOSTS=localhost,127.0.0.1
@@ -145,6 +149,7 @@ DB_PASSWORD="sua#senha#forte"
 DB_HOST=db
 DB_PORT=5432
 ```
+
 No Docker, DB_HOST = db (nome do serviço no docker-compose.yml).
 
 ---
@@ -161,9 +166,87 @@ docker compose up --build
 docker compose exec web python manage.py migrate
 docker compose exec web python manage.py createsuperuser
 ```
+
 API: http://localhost:8000/
 
 Swagger: http://localhost:8000/api/schema/swagger/
+
+---
+
+### 📚 API — Fluxo de uso (exemplos)
+
+---
+
+### 1) Obter token (JWT)
+```
+curl -X POST http://localhost:8000/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"seu_usuario","password":"sua_senha"}'
+```
+
+Resposta esperada:
+```
+{"access":"<jwt_access>","refresh":"<jwt_refresh>"}
+```
+
+Guarde o access e use nos próximos requests:
+```
+AUTH="Authorization: Bearer <jwt_access>"
+```
+
+---
+
+### 2) Criar uma categoria
+```
+curl -X POST http://localhost:8000/api/catalog/categories/ \
+  -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{"name":"Eletrônicos","slug":"eletronicos"}'
+```
+
+---
+
+### 3) Criar um produto
+```
+curl -X POST http://localhost:8000/api/catalog/products/ \
+  -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{
+    "name":"Fone Bluetooth",
+    "sku":"FONE-BT-001",
+    "price":"199.90",
+    "category": 1,
+    "stock": 50,
+    "is_active": true
+  }'
+```
+
+---
+
+### 4) Listar produtos (com busca/filtro/ordenação)
+```
+# Busca por nome
+curl -H "$AUTH" "http://localhost:8000/api/catalog/products/?search=fone"
+
+# Filtro por categoria (ex.: slug)
+curl -H "$AUTH" "http://localhost:8000/api/catalog/products/?category=eletronicos"
+
+# Ordenar por preço desc
+curl -H "$AUTH" "http://localhost:8000/api/catalog/products/?ordering=-price"
+```
+
+---
+
+### 5) Criar um pedido
+```
+curl -X POST http://localhost:8000/api/orders/ \
+  -H "Content-Type: application/json" -H "$AUTH" \
+  -d '{
+    "customer_name": "João Silva",
+    "customer_email": "joao@email.com",
+    "items": [{"product": 1, "quantity": 2}],
+    "total": "399.80",
+    "status": "NEW"
+  }'
+```
 
 ---
 
@@ -202,7 +285,10 @@ API_Catalogos/
 ├─ .gitignore
 └─ .env  # (não versionado)
 ```
-🛟 Problemas comuns
+
+---
+
+### 🛟 Problemas comuns
 
 [Errno 11001] getaddrinfo failed
 DB_HOST incorreto.
@@ -212,16 +298,20 @@ Local: localhost
 Docker: db
 
 permission denied for schema public
-Usuário sem permissão suficiente. Conceda no Postgres:
-```sql
+
+Usuário sem permissão suficiente. No Postgres:
+```
 GRANT ALL PRIVILEGES ON DATABASE api_catalogos TO api_user;
 GRANT ALL ON SCHEMA public TO api_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO api_user;
 ```
+
 Senha com # no .env
 Use aspas: DB_PASSWORD="minha#senha".
 
-Docker não responde
+---
+
+### Docker não responde
 Verifique:
 ```
 docker compose ps
@@ -232,39 +322,23 @@ docker compose logs web
 ---
 
 ### 🤝 Contribuição
-
+```
 git checkout -b feature/minha-feature
-
 git commit -m "feat: minha feature"
-
 git push origin feature/minha-feature
-
-Abra um Pull Request
+# Abra um Pull Request
+```
 
 ---
 
-## 📜 Licença
+### 📜 Licença
 
-Este projeto está licenciado sob a **MIT License** — veja o arquivo [LICENSE](LICENSE) para detalhes.
+Este projeto está licenciado sob a MIT License — veja o arquivo LICENSE
+ para detalhes.
 
-MIT License
+### O que você ainda precisa ajustar
+- Trocar `<URL-do-seu-repo>` pela URL real do seu GitHub.
+- (Opcional) Criar um arquivo `LICENSE` na raiz e colocar o texto da MIT lá (como você já colou no final da sua versão).  
+- Garante que `.env` **não** está versionado (`.gitignore` deve conter `.env`).
 
-Copyright (c) 2025 Marcos Henrique
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the “Software”), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Se quiser, eu já te mando os comandos de `git add/commit/push` pra subir essa versão.
