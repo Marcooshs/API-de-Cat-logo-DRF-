@@ -8,6 +8,7 @@ __pycache__/
 
 # Env (NUNCA commitar)
 .env
+*.env
 .env.*
 
 # Django
