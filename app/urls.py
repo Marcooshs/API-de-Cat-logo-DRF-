@@ -1,4 +1,3 @@
-# app/urls.py
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -41,4 +40,6 @@ urlpatterns = [
     # Docs
     path('api/schema/', SpectacularAPIView.as_view(), name= 'schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name= 'schema'), name= 'swagger-ui'),
+
+    path("healthz/", lambda r: JsonResponse({"status": "ok"})),
 ]

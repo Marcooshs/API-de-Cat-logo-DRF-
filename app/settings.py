@@ -77,16 +77,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app.wsgi.application"
 
-# === Banco de dados (PostgreSQL por .env) ===
+# === Banco de dados (força Postgres) ===
+required_env = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
+missing = [k for k in required_env if not os.getenv(k)]
+if missing:
+    raise RuntimeError(
+        "Variáveis ausentes para Postgres: " + ", ".join(missing)
+        + ". Defina-as no .env."
+    )
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "api_catalogos"),
-        "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "localhost"),  # em Docker use "db"
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT", "5432"),
-        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),  # conexões persistentes
+        "CONN_MAX_AGE": 60,
     }
 }
 
