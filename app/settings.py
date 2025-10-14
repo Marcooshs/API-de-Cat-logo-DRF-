@@ -77,26 +77,45 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app.wsgi.application"
 
-# === Banco de dados (força Postgres) ===
+# === Banco de dados (Postgres por padrão, SQLite opcional) ===
 required_env = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
 missing = [k for k in required_env if not os.getenv(k)]
-if missing:
+
+# Permite fallback para SQLite quando explicitamente solicitado ou quando as
+# variáveis de ambiente para Postgres estão ausentes (útil em desenvolvimento
+# local e durante os testes automatizados).
+use_sqlite_env = os.getenv("DJANGO_USE_SQLITE")
+use_sqlite = (
+    (use_sqlite_env == "1")
+    if use_sqlite_env is not None
+    else bool(missing)
+)
+
+if missing and not use_sqlite:
     raise RuntimeError(
         "Variáveis ausentes para Postgres: " + ", ".join(missing)
-        + ". Defina-as no .env."
+        + ". Defina-as no .env ou habilite DJANGO_USE_SQLITE para fallback."
     )
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-        "CONN_MAX_AGE": 60,
+if use_sqlite or missing:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
+        }
+    }
 
 # === Senhas (desativado em dev) ===
 AUTH_PASSWORD_VALIDATORS = []
