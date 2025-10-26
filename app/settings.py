@@ -35,8 +35,8 @@ INSTALLED_APPS = [
     # 3rd party
     "rest_framework",
     "django_filters",
-    "drf_spectacular",      # OpenAPI/Swagger
-    "corsheaders",          # CORS
+    "drf_spectacular",
+    "corsheaders",
 
     # Apps do projeto
     "catalog",
@@ -46,10 +46,7 @@ INSTALLED_APPS = [
 # === Middlewares ===
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
-    # CORS deve vir antes de CommonMiddleware
     "corsheaders.middleware.CorsMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -143,7 +140,6 @@ CACHES = {
 }
 
 # === CORS ===
-# Em dev é prático liberar tudo; em prod prefira CORS_ALLOWED_ORIGINS
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "1" if DEBUG else "0") == "1"
 CORS_ALLOWED_ORIGINS = (
     [] if CORS_ALLOW_ALL_ORIGINS else os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
