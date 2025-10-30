@@ -1,26 +1,45 @@
 from pathlib import Path
 from datetime import timedelta
 import os
-
 from dotenv import load_dotenv
-load_dotenv()
 
+# === Base dir ===
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carrega sempre o .env (usado no Docker/CI)
+load_dotenv(BASE_DIR / ".env")
+
+# Detecta se está rodando no Docker
+RUNNING_IN_DOCKER = os.getenv("RUNNING_IN_DOCKER") == "1" or Path("/.dockerenv").exists()
+
+# Em ambiente local (fora do Docker), permite sobrescrever com .env.local
+if not RUNNING_IN_DOCKER:
+    load_dotenv(BASE_DIR / ".env.local", override=True)
+
+# ---- Helpers de env ----
+def env_bool(name: str, default: bool = False) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    return val.strip().lower() in {"1", "true", "t", "yes", "y", "on"}
+
+def env_list(name: str, default: str = "") -> list[str]:
+    raw = os.getenv(name, default)
+    return [item for item in (x.strip() for x in raw.split(",")) if item]
 
 # === Django básico ===
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-unsafe")
-DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
+DEBUG = env_bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = os.getenv(
+ALLOWED_HOSTS = env_list(
     "DJANGO_ALLOWED_HOSTS",
-    "localhost,127.0.0.1,0.0.0.0"
-).split(",")
+    default="localhost,127.0.0.1,0.0.0.0",
+)
 
-# Confiar em origens para CSRF (útil quando acessa via porta/host diferentes ou proxy)
-CSRF_TRUSTED_ORIGINS = os.getenv(
+CSRF_TRUSTED_ORIGINS = env_list(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "http://localhost,http://127.0.0.1,http://0.0.0.0"
-).split(",")
+    default="http://localhost,http://127.0.0.1,http://0.0.0.0",
+)
 
 # === Apps instalados ===
 INSTALLED_APPS = [
@@ -78,9 +97,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 required_env = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
 missing = [k for k in required_env if not os.getenv(k)]
 
-# Permite fallback para SQLite quando explicitamente solicitado ou quando as
-# variáveis de ambiente para Postgres estão ausentes (útil em desenvolvimento
-# local e durante os testes automatizados).
+# Fallback opcional para SQLite (útil em dev/testes)
 use_sqlite_env = os.getenv("DJANGO_USE_SQLITE")
 use_sqlite = (
     (use_sqlite_env == "1")
@@ -91,7 +108,7 @@ use_sqlite = (
 if missing and not use_sqlite:
     raise RuntimeError(
         "Variáveis ausentes para Postgres: " + ", ".join(missing)
-        + ". Defina-as no .env ou habilite DJANGO_USE_SQLITE para fallback."
+        + ". Defina-as no .env/.env.local ou habilite DJANGO_USE_SQLITE=1 para fallback."
     )
 
 if use_sqlite or missing:
@@ -108,6 +125,8 @@ else:
             "NAME": os.getenv("DB_NAME"),
             "USER": os.getenv("DB_USER"),
             "PASSWORD": os.getenv("DB_PASSWORD"),
+            # No Docker: DB_HOST=db / DB_PORT=5432 (defina isso no .env usado pelo compose)
+            # Fora do Docker: pode usar 127.0.0.1:5434 no .env.local, se quiser
             "HOST": os.getenv("DB_HOST"),
             "PORT": os.getenv("DB_PORT", "5432"),
             "CONN_MAX_AGE": 60,
@@ -140,36 +159,25 @@ CACHES = {
 }
 
 # === CORS ===
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "1" if DEBUG else "0") == "1"
-CORS_ALLOWED_ORIGINS = (
-    [] if CORS_ALLOW_ALL_ORIGINS else os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
-)
+CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", default=DEBUG)
+CORS_ALLOWED_ORIGINS = [] if CORS_ALLOW_ALL_ORIGINS else env_list("CORS_ALLOWED_ORIGINS", default="")
 
 # === DRF ===
 REST_FRAMEWORK = {
-    # Auth
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
-
-    # Filtros / Busca / Ordenação
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-
-    # Paginação
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
-
-    # OpenAPI (drf-spectacular)
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-
-    # Rate limiting (throttling) básico
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",

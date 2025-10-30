@@ -1,22 +1,37 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:16
     container_name: api_catalogos_db
+    restart: unless-stopped
     env_file: .env
+    # Garante que o Postgres receba as envs esperadas
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"    # se já tiver Postgres local, use "5433:5432"
+      # host:container (no host você usa 5434; dentro da rede Docker é SEMPRE 5432)
+      - "5434:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   web:
     build: .
     container_name: api_catalogos_web
+    restart: unless-stopped
     env_file: .env
+    # Estas variáveis sobrescrevem o que vier do .env (são PRIORITÁRIAS)
+    environment:
+      RUNNING_IN_DOCKER: "1"   # faz o settings.py ignorar .env.local
+      DB_HOST: "db"            # dentro do Docker, o host do Postgres é o serviço "db"
+      DB_PORT: "5432"          # porta interna do container do Postgres
     depends_on:
       db:
         condition: service_healthy
@@ -26,10 +41,10 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -sS http://localhost:8000/ > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
 
 volumes:
   db_data:

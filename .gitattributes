@@ -1,0 +1,72 @@
+# ---- Defaults ----
+# Use LF por padrão para evitar problemas no Docker/WSL/Linux.
+* text=auto eol=lf
+
+# ---- Windows scripts (mantém CRLF) ----
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# ---- Unix scripts (LF) ----
+*.sh   text eol=lf
+*.bash text eol=lf
+
+# ---- Python / Config (LF) ----
+*.py    text eol=lf
+*.pyi   text eol=lf
+*.toml  text eol=lf
+*.ini   text eol=lf
+*.cfg   text eol=lf
+*.conf  text eol=lf
+*.env   text eol=lf
+*.sample text eol=lf
+
+# ---- Web/Docs/Config em texto (LF) ----
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.md    text eol=lf
+*.rst   text eol=lf
+*.sql   text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+
+# ---- Arquivos binários (não normalizar) ----
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.tar   binary
+*.tar.gz binary
+*.tgz   binary
+*.gz    binary
+*.7z    binary
+*.rar   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.otf   binary
+*.db    binary
+*.sqlite  binary
+*.sqlite3 binary
+
+# ---- Notebooks (texto, LF) para permitir diff legível ----
+*.ipynb text eol=lf
+
+# ---- Patches (texto, LF) ----
+*.patch text eol=lf
+
+# ---- Migrations (texto, LF) ----
+*/migrations/*.py text eol=lf

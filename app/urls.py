@@ -7,10 +7,12 @@ from django.http import JsonResponse
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
+    SpectacularRedocView,
 )
 
 from catalog.views import CategoryViewSet, ProductViewSet
 from orders.views import OrderViewSet
+
 
 def healthz(_request):
     return JsonResponse({"status": "ok"})
@@ -18,28 +20,33 @@ def healthz(_request):
 
 # Catálogo — com barra final (ex.: /api/catalog/products/)
 router_catalog = DefaultRouter()  # trailing slash ON (default)
-router_catalog.register(r'catalog/categories', CategoryViewSet, basename= 'category')
-router_catalog.register(r'catalog/products', ProductViewSet, basename= 'product')
+router_catalog.register(r"catalog/categories", CategoryViewSet, basename="category")
+router_catalog.register(r"catalog/products", ProductViewSet, basename="product")
 
 # Pedidos — sem barra final (ex.: /api/orders/me/cart/add-item)
-router_orders = DefaultRouter(trailing_slash= False)  # trailing slash OFF
-router_orders.register(r'orders', OrderViewSet, basename= 'order')
+router_orders = DefaultRouter(trailing_slash=False)  # trailing slash OFF
+router_orders.register(r"orders", OrderViewSet, basename="order")
 
 urlpatterns = [
-    path('api/', include(router_catalog.urls)),
-    path('api/', include(router_orders.urls)),
+    # APIs
+    path("api/", include(router_catalog.urls)),
+    path("api/", include(router_orders.urls)),
 
-    # Auth
-    path('api/auth/login/', TokenObtainPairView.as_view(), name= 'token_obtain_pair'),
-    path('api/auth/refresh/', TokenRefreshView.as_view(), name= 'token_refresh'),
-
-    # Admin
-    path('admin/', admin.site.urls),
-    path("healthz/", healthz),
+    # Auth (rotas oficiais)
+    path("api/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Aliases extras (para também aceitar /token/)
+    path("api/auth/token/", TokenObtainPairView.as_view(), name="jwt_token"),
+    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="jwt_token_refresh"),
 
     # Docs
-    path('api/schema/', SpectacularAPIView.as_view(), name= 'schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name= 'schema'), name= 'swagger-ui'),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
-    path("healthz/", lambda r: JsonResponse({"status": "ok"})),
+    # Healthcheck (uma rota só)
+    path("healthz/", healthz),
+
+    # Admin
+    path("admin/", admin.site.urls),
 ]
