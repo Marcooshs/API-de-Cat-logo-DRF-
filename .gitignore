@@ -1,23 +1,30 @@
-# Python
+# Python/Django
 __pycache__/
 *.py[cod]
-*.egg-info/
-.venv/
-*.log
-
-# Env (NUNCA commitar segredos)
+*.sqlite3
+db.sqlite3
 .env
-!.env.example
+.env.local
+*.log
+*.pot
+*.pyc
+.DS_Store
 
-# Django
+# Venv/IDE
+.venv/
+.idea/
+.vscode/
+*.code-workspace
+
+# Django/DRF
 staticfiles/
 media/
+*.bak
 
-# IDE/OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+# Tests/Coverage
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Docker
 *.pid
