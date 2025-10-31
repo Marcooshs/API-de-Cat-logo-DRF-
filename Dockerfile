@@ -1,22 +1,22 @@
-# Dockerfile
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Dependências de sistema para compilar pacotes como psycopg/psycopg2
+# Dependências do sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev curl && \
-    rm -rf /var/lib/apt/lists/*
+    build-essential \
+    libpq-dev \
+    curl \
+    postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
 
-# Instala dependências Python
+# Dependências Python
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copia o projeto
-COPY . /app
-
-EXPOSE 8000
-# O comando será definido no docker-compose
+# Código da app
+COPY . /app/

@@ -125,8 +125,6 @@ else:
             "NAME": os.getenv("DB_NAME"),
             "USER": os.getenv("DB_USER"),
             "PASSWORD": os.getenv("DB_PASSWORD"),
-            # No Docker: DB_HOST=db / DB_PORT=5432 (defina isso no .env usado pelo compose)
-            # Fora do Docker: pode usar 127.0.0.1:5434 no .env.local, se quiser
             "HOST": os.getenv("DB_HOST"),
             "PORT": os.getenv("DB_PORT", "5432"),
             "CONN_MAX_AGE": 60,
