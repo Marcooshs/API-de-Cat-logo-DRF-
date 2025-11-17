@@ -12,7 +12,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      # host:container (no host você usa 5434; dentro da rede Docker é SEMPRE 5432)
       - "5434:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -27,11 +26,10 @@ services:
     container_name: api_catalogos_web
     restart: unless-stopped
     env_file: .env
-    # Estas variáveis sobrescrevem o que vier do .env (são PRIORITÁRIAS)
     environment:
-      RUNNING_IN_DOCKER: "1"   # faz o settings.py ignorar .env.local
-      DB_HOST: "db"            # dentro do Docker, o host do Postgres é o serviço "db"
-      DB_PORT: "5432"          # porta interna do container do Postgres
+      RUNNING_IN_DOCKER: "1"
+      DB_HOST: "db"
+      DB_PORT: "5432"
     depends_on:
       db:
         condition: service_healthy

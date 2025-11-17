@@ -35,6 +35,7 @@ urlpatterns = [
     # Auth (rotas oficiais)
     path("api/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
     # Aliases extras (para também aceitar /token/)
     path("api/auth/token/", TokenObtainPairView.as_view(), name="jwt_token"),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="jwt_token_refresh"),
